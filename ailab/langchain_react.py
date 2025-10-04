@@ -33,3 +33,16 @@ agent = create_tool_calling_agent(model, tools, prompt)
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 agent_executor.invoke({"input": query})
+
+from langgraph.prebuilt import create_react_agent
+
+langgraph_agent_executor = create_react_agent(model, tools)
+
+
+messages = langgraph_agent_executor.invoke({"messages": [("human", query)]})
+
+result = {
+            "input": query,
+            "output": messages["messages"][-1].content,
+        }
+print(result)
