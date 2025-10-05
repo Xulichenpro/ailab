@@ -4,13 +4,26 @@ from magic_tools import magic_tool_1,magic_tool_2,magic_tools
 from google.genai import types
 from google import genai
 
-default_system_message = "Your are a helpful assistant.You may decompose big task into small ones.Before you act,you should think."
+default_system_message = """
+    You are a helpful ReAct agent.
+    You must follow the format below in every response:
+    Thought: Describe what you are thinking or reasoning about the problem.
+    Action: If you need to use a tool, call it using function_call.
+    Observation: When you receive tool output, use it to continue reasoning.
+    Answer: Give the final answer to the user when ready.
+
+    Rules:
+    - Always think step by step before answering.
+    - If you need a tool, only use one function_call at a time.
+    - Do NOT skip Thought or Action sections.
+"""
 
 class react_agent:
     def __init__(self,system_message:str = default_system_message,tools:list[dict] = None):
         self.messages = [
             types.Content(
-                role = "user",parts = [types.Part(text= system_message)]
+                role = "user",
+                parts = [types.Part(text= system_message)]
             )
         ]
         self.client = genai.Client()
@@ -33,7 +46,11 @@ class react_agent:
                 )
         
         while response.candidates[0].content.parts[0].function_call:
-            print(response.candidates[0].content.parts[0].function_call)
+            for part in response.candidates[0].content.parts:
+                if part.text:
+                    print(part.text)  
+                if part.function_call:
+                    print("Function Call:", part.function_call)
             tool = response.candidates[0].content.parts[0].function_call   
             name = tool.name
             args = tool.args
